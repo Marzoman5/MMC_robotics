@@ -12,12 +12,12 @@ The following code supports
 # define debug true
 
 
-#include <SoftwareSerial.h> //Creates serial ports for Digital IO
-SoftwareSerial BT(11, 12);  //Create Serial Port 11-TX, 12-RX
+//#include <SoftwareSerial.h> //Creates serial ports for Digital IO
+//SoftwareSerial BT(11, 12);  //Create Serial Port 11-TX, 12-RX
                             //for Bluetooth Module
 
-#define RightDriveMotor 1
-#define LeftDriveMotor  2
+#define RightDriveMotor 2
+#define LeftDriveMotor  1
 
 #define Claw            9
 
@@ -66,7 +66,7 @@ void setup()
 {
 
    Serial.begin(9600); // Begin Serial for debug
-   BT.begin(9600);      // Begin Serial for Bluetooth module
+//   BT.begin(9600);      // Begin Serial for Bluetooth module
 
    AFMS_top.begin();         // Connect to the motor
    AFMS_bottom.begin();         // Connect to the motor
@@ -103,11 +103,11 @@ void setup()
 
 void loop() 
 {
-  if (BT.available())  //Do this if BT Command found
+  if (Serial.available())  //Do this if BT Command found
   {
     if(debug){Serial.println("looking");}
 
-    if ('s' == BT.read())
+    if ('s' == Serial.read())
     { //Read data
       getData();
 
@@ -187,14 +187,14 @@ void loop()
   //Set Turret speed
   if (rx < 200)
   {
-    trAg = (trAg-1);
+    trAg = (trAg-2);
     trAg = constrain(trAg, 0, 180);
     turretMotor.write(trAg);
     //delay(100);
   }
   else if (rx > 812)  //go forward
   {
-    trAg = (trAg+1);
+    trAg = (trAg+2);
     trAg = constrain(trAg, 0, 180);
     turretMotor.write(trAg);
     //delay(100);
@@ -224,13 +224,13 @@ void loop()
   }
     
   //Set Elbow speed
-  if (tb == 0)
+  if (bb == 0)
   {
     elbowMotor->run(FORWARD);
     elbowMotor->setSpeed(255);
     Serial.println("Elbow Up");
   }
-  else if (bb==0)  //go forward
+  else if (tb==0)  //go forward
   {
     elbowMotor->run(BACKWARD);
     elbowMotor->setSpeed(200);
@@ -257,12 +257,12 @@ void loop()
   }
 
   //Set dumper speed
-  if (jrb=0)
+  if (jrb==0)
   {
     dumper->run(BACKWARD);
     dumper->setSpeed(50);
   }
-  else if (lb=0)  //go forward
+  else if (jlb==0)  //go forward
   {
     dumper->run(FORWARD);
     dumper->setSpeed(50);
@@ -282,14 +282,14 @@ void loop()
 void getData()
 {
       //Read data
-    rx = BT.parseInt();
-    ry = BT.parseInt();
-    lx = BT.parseInt();
-    ly = BT.parseInt();
-    jlb = BT.parseInt();
-    jrb = BT.parseInt();
-    tb = BT.parseInt();
-    lb = BT.parseInt();    
-    rb = BT.parseInt();
-    bb = BT.parseInt();
+    rx = Serial.parseInt();
+    ry = Serial.parseInt();
+    lx = Serial.parseInt();
+    ly = Serial.parseInt();
+    jlb = Serial.parseInt();
+    jrb = Serial.parseInt();
+    tb = Serial.parseInt();
+    lb = Serial.parseInt();    
+    rb = Serial.parseInt();
+    bb = Serial.parseInt();
 }
