@@ -9,6 +9,29 @@ The following code supports
 */
 
 
+//Define the Pins
+
+//Motor 1
+int pinAIN1 = 3; //Direction
+int pinAIN2 = 4; //Direction
+int pinPWMA = 5; //Speed
+
+//Motor 2
+int pinBIN1 = 8; //Direction
+int pinBIN2 = 7; //Direction
+int pinPWMB = 6; //Speed
+
+//Standby
+int pinSTBY = 2;
+
+//Constants to help remember the parameters
+static boolean turnCW = 0;  //for motorDrive function
+static boolean turnCCW = 1; //for motorDrive function
+static boolean motor1 = 0;  //for motorDrive, motorStop, motorBrake functions
+static boolean motor2 = 1;  //for motorDrive, motorStop, motorBrake functions
+
+
+
 # define debug true
 
 
@@ -34,11 +57,11 @@ The following code supports
 Servo claw;  // create servo object to control a servo 
 Servo turretMotor;
 
-Adafruit_MotorShield AFMS_bottom = Adafruit_MotorShield(0x60);  // Create Motorshield
+//Adafruit_MotorShield AFMS_bottom = Adafruit_MotorShield(0x60);  // Create Motorshield
 Adafruit_MotorShield AFMS_top = Adafruit_MotorShield(0x61);  // Create Motorshield
 
-Adafruit_DCMotor *leftMotor = AFMS_bottom.getMotor(LeftDriveMotor);      // Create Motors
-Adafruit_DCMotor *rightMotor = AFMS_bottom.getMotor(RightDriveMotor);
+//Adafruit_DCMotor *leftMotor = AFMS_bottom.getMotor(LeftDriveMotor);      // Create Motors
+//Adafruit_DCMotor *rightMotor = AFMS_bottom.getMotor(RightDriveMotor);
 
 Adafruit_DCMotor *elbowMotor = AFMS_top.getMotor(ElbowMotor);      // Create Motors
 Adafruit_DCMotor *wristMotor = AFMS_top.getMotor(WristMotor);
@@ -65,20 +88,31 @@ int motorSpeed;
 void setup() 
 {
 
+  pinMode(pinPWMA, OUTPUT);
+  pinMode(pinAIN1, OUTPUT);
+  pinMode(pinAIN2, OUTPUT);
+
+  pinMode(pinPWMB, OUTPUT);
+  pinMode(pinBIN1, OUTPUT);
+  pinMode(pinBIN2, OUTPUT);
+
+  pinMode(pinSTBY, OUTPUT);
+  
+
    Serial.begin(9600); // Begin Serial for debug
 //   BT.begin(9600);      // Begin Serial for Bluetooth module
 
    AFMS_top.begin();         // Connect to the motor
-   AFMS_bottom.begin();         // Connect to the motor
+/*   AFMS_bottom.begin();         // Connect to the motor
    
    rightMotor->setSpeed(100);  // 10 rpm
    rightMotor->run(FORWARD);         // turn on motor
-   rightMotor->run(RELEASE);
+   rightMotor->run(RELESE);
 
    leftMotor->setSpeed(100);  // 10 rpm
    leftMotor->run(FORWARD);          // turn on motor
    leftMotor->run(RELEASE);
-
+*/
    elbowMotor->setSpeed(100);  // 10 rpm
    elbowMotor->run(FORWARD);          // turn on motor
    elbowMotor->run(RELEASE);         
@@ -95,7 +129,7 @@ void setup()
    claw.write(100);
    turretMotor.attach(TurretMotor);
    turretMotor.write(trAg);
-   TIMSK0=0; 
+//   TIMSK0=0; too stop jitter may not need it
 
 //   servoC.attach(ServoClaw);
  
@@ -144,43 +178,66 @@ void loop()
   //Set Right Motor speed
   if (ry < 250)
   {
+
+    motorDrive(motor1, turnCW, 255);
+
+    /*
     rightMotor->run(BACKWARD);
     motorSpeed = map(ry, 250, 0, 0, 255);  //scale to 0 and 255
-    rightMotor->setSpeed(motorSpeed);
+    rightMotor->setSpeed(motorSpeed)0;
+    */
     Serial.print("back");
     Serial.print(motorSpeed);
   }
   else if (ry > 850)  //go forward
   {
+
+  motorDrive(motor1, turnCCW, 255);
+
+    /*
     rightMotor->run(FORWARD);
     motorSpeed = map(ry, 850, 1023, 0, 255);  //scale to 0 and 255
     rightMotor->setSpeed(motorSpeed);
+    */
   }
   else
   {
+
+    motorStop(motor1);
+    /*
     motorSpeed = 0;
     rightMotor->run(RELEASE);
     motorSpeed = 0;
+    */
   }
 
   //Set Left Motor speed
   if (ly < 250)
   {
+    motorDrive(motor2, turnCCW, 255);
+    /*
     leftMotor->run(BACKWARD);
     motorSpeed = map(ly, 250, 0, 0, 255);  //scale to 0 and 255
     leftMotor->setSpeed(motorSpeed);
+    */
   }
   else if (ly > 850)  //go forward
   {
+    motorDrive(motor2, turnCW, 255);
+    /*
     leftMotor->run(FORWARD);
     motorSpeed = map(ly, 850, 1023, 0, 255);  //scale to 0 and 255
     leftMotor->setSpeed(motorSpeed);
+    */
   }
   else
   {
+    motorStop(motor2);
+    /*
     motorSpeed = 0;
     leftMotor->run(RELEASE);
     motorSpeed = 0;
+    */
   }
 
 
@@ -292,4 +349,85 @@ void getData()
     lb = Serial.parseInt();    
     rb = Serial.parseInt();
     bb = Serial.parseInt();
+}
+
+
+void motorDrive(boolean motorNumber, boolean motorDirection, int motorSpeed)
+{
+  /*
+  This Drives a specified motor, in a specific direction, at a specified speed:
+    - motorNumber: motor1 or motor2 ---> Motor 1 or Motor 2
+    - motorDirection: turnCW or turnCCW ---> clockwise or counter-clockwise
+    - motorSpeed: 0 to 255 ---> 0 = stop / 255 = fast
+  */
+
+  boolean pinIn1;  //Relates to AIN1 or BIN1 (depending on the motor number specified)
+
+ 
+//Specify the Direction to turn the motor
+  //Clockwise: AIN1/BIN1 = HIGH and AIN2/BIN2 = LOW
+  //Counter-Clockwise: AIN1/BIN1 = LOW and AIN2/BIN2 = HIGH
+  if (motorDirection == turnCW)
+    pinIn1 = HIGH;
+  else
+    pinIn1 = LOW;
+
+//Select the motor to turn, and set the direction and the speed
+  if(motorNumber == motor1)
+  {
+    digitalWrite(pinAIN1, pinIn1);
+    digitalWrite(pinAIN2, !pinIn1);  //This is the opposite of the AIN1
+    analogWrite(pinPWMA, motorSpeed);
+  }
+  else
+  {
+    digitalWrite(pinBIN1, pinIn1);
+    digitalWrite(pinBIN2, !pinIn1);  //This is the opposite of the BIN1
+    analogWrite(pinPWMB, motorSpeed);
+  }
+   
+ 
+
+//Finally , make sure STBY is disabled - pull it HIGH
+  digitalWrite(pinSTBY, HIGH);
+
+}
+
+void motorBrake(boolean motorNumber)
+{
+/*
+This "Short Brake"s the specified motor, by setting speed to zero
+*/
+
+  if (motorNumber == motor1)
+    analogWrite(pinPWMA, 0);
+  else
+    analogWrite(pinPWMB, 0);
+   
+}
+
+
+void motorStop(boolean motorNumber)
+{
+  /*
+  This stops the specified motor by setting both IN pins to LOW
+  */
+  if (motorNumber == motor1) {
+    digitalWrite(pinAIN1, LOW);
+    digitalWrite(pinAIN2, LOW);
+  }
+  else
+  {
+    digitalWrite(pinBIN1, LOW);
+    digitalWrite(pinBIN2, LOW);
+  } 
+}
+
+
+void motorsStandby()
+{
+  /*
+  This puts the motors into Standby Mode
+  */
+  digitalWrite(pinSTBY, LOW);
 }
