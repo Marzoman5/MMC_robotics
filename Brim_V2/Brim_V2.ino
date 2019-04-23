@@ -176,10 +176,11 @@ void loop()
 
 
   //Set Right Motor speed
-  if (ry < 250)
+  if (ry < 412)
   {
+    motorSpeed = map(ry, 412, 0, 0, 255);
+    motorDrive(motor1, turnCW, motorSpeed);
 
-    motorDrive(motor1, turnCW, 255);
 
     /*
     rightMotor->run(BACKWARD);
@@ -189,10 +190,10 @@ void loop()
     Serial.print("back");
     Serial.print(motorSpeed);
   }
-  else if (ry > 850)  //go forward
+  else if (ry > 612)  //go forward
   {
-
-  motorDrive(motor1, turnCCW, 255);
+  motorSpeed = map(ry, 612, 1023, 0, 255);
+  motorDrive(motor1, turnCCW, motorSpeed);
 
     /*
     rightMotor->run(FORWARD);
@@ -212,18 +213,20 @@ void loop()
   }
 
   //Set Left Motor speed
-  if (ly < 250)
+  if (ly < 412)
   {
-    motorDrive(motor2, turnCCW, 255);
+    motorSpeed = map(ly, 412, 0, 0, 255);
+    motorDrive(motor2, turnCCW, motorSpeed);
     /*
     leftMotor->run(BACKWARD);
     motorSpeed = map(ly, 250, 0, 0, 255);  //scale to 0 and 255
     leftMotor->setSpeed(motorSpeed);
     */
   }
-  else if (ly > 850)  //go forward
+  else if (ly > 612)  //go forward
   {
-    motorDrive(motor2, turnCW, 255);
+    motorSpeed = map(ly, 612, 1023, 0, 255);
+    motorDrive(motor2, turnCW, motorSpeed);
     /*
     leftMotor->run(FORWARD);
     motorSpeed = map(ly, 850, 1023, 0, 255);  //scale to 0 and 255
@@ -240,11 +243,15 @@ void loop()
     */
   }
 
+//Set Turret speed
 
+trAg = map(rx, 0, 1023, 45, 135);
+turretMotor.write(trAg);
+  /*
   //Set Turret speed
   if (rx < 200)
   {
-    trAg = (trAg-2);
+    trAg = (trAg-rx);
     trAg = constrain(trAg, 0, 180);
     turretMotor.write(trAg);
     //delay(100);
@@ -256,7 +263,7 @@ void loop()
     turretMotor.write(trAg);
     //delay(100);
   }
-  /*else  
+  else  
   {
     trAg = constrain(trAg, 0, 180);
     turretMotor.write(trAg);
@@ -301,12 +308,12 @@ void loop()
   if (rb == 0)
   {
     wristMotor->run(FORWARD);
-    wristMotor->setSpeed(250);
+    wristMotor->setSpeed(150);
   }
   else if (lb==0)  //go forward
   {
     wristMotor->run(BACKWARD);
-    wristMotor->setSpeed(250);
+    wristMotor->setSpeed(150);
   }
   else
   {
